@@ -13,6 +13,7 @@ logging.getLogger('json').setLevel(logging.DEBUG)
 
 
 records = []
+cip_data = json.load(sys.stdin)
 
 
 def get_entity_key(entity):
@@ -57,13 +58,12 @@ def get_children_entity(entity):
         'flavor': []}[entity]
 
 
-def get_from_cip(entity, cip_records, parent=None):
+def get_from_cip(entity, parent=None):
     '''
     Retrieves the records from CIP that match the entity type. If parent is given, it 
     filters CIP records according to the entity's parent value.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :cip_records: CIP data
     :parent: parent's entity CIP id value
     '''
     l = []
@@ -111,7 +111,7 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
                 return record
 
 
-def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
+def generate_records(entity, parent=None, parent_cmdb=None):
     '''
     Recursively generates the records, obtained from CIP, that will be pushed to CMDB.
 
@@ -122,14 +122,12 @@ def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
     is found, it will add a new entry in CMDB.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :cip_data: Records received from CIP 
     :parent: parent's entity CIP id value
     :parent_cmdb: parent's entity CMDB id value
     '''
     logging.debug('Recursive call (locals: %s)' % locals())
 
     cip = get_from_cip(entity,
-                       cip_data,
                        parent=parent)
     logging.debug(('Got records from CIP based on entity <%s> and parent '
                    '<%s>: %s' % (entity, parent, cip)))
@@ -165,13 +163,10 @@ def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
         logging.debug('Resultant record: %s' % json.dumps(item, indent=4))
         for child in entity_children:
             generate_records(child,
-                             cip_data,
-                             records,
                              parent=cip_id_value,
                              parent_cmdb=cmdb_id_value)
 
 
 def main():
-    cip_data = json.load(sys.stdin)
-    generate_records('provider', cip_data)
+    generate_records('provider')
     print(json.dumps(records, indent=4))
