@@ -1,0 +1,131 @@
+[
+    {
+        "data": {
+            "id": "provider-IFCA-LCG2",
+            "country": "Spain", 
+            "country_code": "ES", 
+            "giis_url": "ldap://gridiis01.ifca.es:2170/mds-vo-name=IFCA-LCG2,o=grid", 
+            "name": "IFCA-LCG2", 
+            "roc": "NGI_IBERGRID", 
+            "subgrid": ""
+        }, 
+        "type": "provider"
+    }, 
+    {
+        "data": {
+            "endpoint": "https://keystone.ifca.es:5000/v3", 
+            "hostname": "cloud.ifca.es", 
+            "provider_id": "provider-IFCA-LCG2", 
+            "service_type": "eu.egi.cloud.vm-management.openstack", 
+            "sitename": "IFCA-LCG2", 
+            "type": "compute"
+        }, 
+        "type": "service"
+    }, 
+    {
+        "data": {
+            "service": "https://keystone.ifca.es:5000/v3", 
+            "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+            "tenant_name": "deep-hybrid-datacloud.eu"
+        }, 
+        "type": "tenant"
+    }, 
+    {
+        "data": {
+            "disk": 30, 
+            "flavor_id": "c765383f-b144-4e90-8819-0cd00cabff67", 
+            "flavor_name": "cm4.8xlarge", 
+            "gpu_model": null, 
+            "gpu_vendor": null, 
+            "num_gpus": 0, 
+            "num_vcpus": 32, 
+            "ram": 60000, 
+            "service": "https://keystone.ifca.es:5000/v3", 
+            "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+            "tenant_name": "deep-hybrid-datacloud.eu"
+        }, 
+        "type": "flavor"
+    }, 
+    {
+        "data": {
+            "disk": 20, 
+            "flavor_id": "cd775e27-af09-407b-ab34-fb999ba418bd", 
+            "flavor_name": "cm4.large", 
+            "gpu_model": null, 
+            "gpu_vendor": null, 
+            "num_gpus": 0, 
+            "num_vcpus": 2, 
+            "ram": 3500, 
+            "service": "https://keystone.ifca.es:5000/v3", 
+            "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+            "tenant_name": "deep-hybrid-datacloud.eu"
+        }, 
+        "type": "flavor"
+    }, 
+    {
+        "data": {
+            "architecture": "x86_64", 
+            "cuDNN_version": null, 
+            "cuda_support": false, 
+            "cuda_version": null, 
+            "distribution": "ubuntu", 
+            "gpu_driver": false, 
+            "gpu_driver_version": null, 
+            "image_description": null, 
+            "image_id": "1cdc7aa2-4f7d-43f7-9741-4251a76a78ee", 
+            "image_marketplace_id": "https://keystone.ifca.es:9292/v2/images/1cdc7aa2-4f7d-43f7-9741-4251a76a78ee/file", 
+            "image_name": "IFCA Debian 9 [20190515]", 
+            "image_os": "ubuntu", 
+            "service": "https://keystone.ifca.es:5000/v3", 
+            "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+            "tenant_name": "deep-hybrid-datacloud.eu", 
+            "type": "ubuntu", 
+            "version": "9"
+        }, 
+        "type": "image"
+    }, 
+    {
+        "data": {
+            "architecture": "x86_64", 
+            "cuDNN_version": null, 
+            "cuda_support": false, 
+            "cuda_version": null, 
+            "distribution": "fedora", 
+            "gpu_driver": false, 
+            "gpu_driver_version": null, 
+            "image_description": null, 
+            "image_id": "dummy_id", 
+            "image_marketplace_id": "https://keystone.ifca.es:9292/v2/images/dummy_id/file", 
+            "image_name": "IFCA Debian 9 [20190515]", 
+            "image_os": "ubuntu", 
+            "service": "none", 
+            "tenant_id": "none", 
+            "tenant_name": "ops", 
+            "type": "fedora", 
+            "version": "7"
+        }, 
+        "type": "image"
+    }, 
+    {
+        "data": {
+            "architecture": null, 
+            "cuDNN_version": null, 
+            "cuda_support": false, 
+            "cuda_version": null, 
+            "distribution": null, 
+            "gpu_driver": false, 
+            "gpu_driver_version": null, 
+            "image_description": null, 
+            "image_id": "6857ee01-2ba9-4846-b788-9e826dd9aaba", 
+            "image_marketplace_id": "https://keystone.ifca.es:9292/v2/images/6857ee01-2ba9-4846-b788-9e826dd9aaba/file", 
+            "image_name": "IFCA Scientific Linux 5.5 + ROOT v5.30.00", 
+            "image_os": null, 
+            "service": "452042ae-82eb-11e9-bc42-526af7764f64", 
+            "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+            "tenant_name": "deep-hybrid-datacloud.eu", 
+            "type": null, 
+            "version": null
+        }, 
+        "type": "image"
+    }
+]

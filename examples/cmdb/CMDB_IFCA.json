@@ -1,0 +1,87 @@
+[{
+    "_id": "provider-IFCA-LCG2",
+    "_rev": "1-f398803aef1bfe522fc85fd51ee36121",
+    "data": {
+        "country": "Spain",
+        "country_code": "ES",
+        "giis_url": "ldap://gridiis01.ifca.es:2170/mds-vo-name=IFCA-LCG2,o=grid",
+        "name": "IFCA-LCG2",
+        "owners": [
+            "marica.antonacci@ba.infn.it"
+        ],
+        "roc": "NGI_IBERGRID",
+        "subgrid": ""
+    },
+    "type": "provider"
+},
+{
+    "_id": "eaa07cfcceb85cd11b8adacf350066fe",
+    "_rev": "2-b7a55e9e505005d0191e3b3918524f8d",
+    "data": {
+        "endpoint": "https://keystone.ifca.es:5000/v3",
+        "hostname": "cloud.ifca.es",
+        "provider_id": "provider-IFCA-LCG2",
+        "service_type": "eu.egi.cloud.vm-management.openstack",
+        "sitename": "IFCA-LCG2",
+        "type": "compute"
+    },
+    "type": "service"
+},
+{
+    "_id": "id_1",
+    "_rev": "rev_1",
+    "data": {
+        "tenant_id": "36fb9668c47148d9b1bedba88eb2460a", 
+        "tenant_name": "deep-hybrid-datacloud.eu",
+        "service": "eaa07cfcceb85cd11b8adacf350066fe"
+    },
+    "type": "tenant"
+},
+{
+    "_id": "eaa07cfcceb85cd11b8adacf35006a02",
+    "_rev": "2-9f200d4447de0213ebdb62bb429ce6db",
+    "data": {
+        "architecture": "x86_64",
+        "distribution": "ubuntu",
+        "image_id": "9d51a8a8-1da1-4462-ac7d-8f8a2eaf7159",
+        "image_name": "ubuntu-16.04-cuda8",
+        "service": "eaa07cfcceb85cd11b8adacf350066fe",
+        "type": "linux",
+        "version": "16.04-gpu",
+        "tenant_id": "tenant_1",
+        "tenant_name": "my_project"
+    },
+    "type": "image"
+},
+{
+    "_id": "eaa07cfcceb85cd11b8adacf3500758d",
+    "_rev": "1-3f893fc5e100cb85c96984b93da91ba7",
+    "data": {
+        "architecture": "x86_64",
+        "distribution": "ubuntu",
+        "image_id": "e2b7f3b6-e553-471d-92f6-652de3398bcb",
+        "image_name": "ubuntu-16.04",
+        "service": "eaa07cfcceb85cd11b8adacf350066fe",
+        "type": "linux",
+        "version": "16.04",
+        "tenant_id": "tenant_1",
+        "tenant_name": "my_project"
+    },
+    "type": "image"
+},
+{
+    "_id": "eaa07cfcceb85cd11b8adacf350077fb",
+    "_rev": "2-433f1cffed8cf0e9af015100238324b1",
+    "data": {
+        "architecture": "x86_64",
+        "distribution": "ubuntu",
+        "image_id": "eaa07cfcceb85cd11b8adacf35006a02",
+        "image_name": "ubuntu-16.04-cuda9",
+        "service": "eaa07cfcceb85cd11b8adacf350066fe",
+        "type": "linux",
+        "version": "16.04-gpu",
+        "tenant_id": "tenant_1",
+        "tenant_name": "my_project"
+    },
+    "type": "image"
+}]
