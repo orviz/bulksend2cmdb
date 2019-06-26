@@ -111,7 +111,7 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
                 return record
 
 
-def generate_records(entity, cip_data, records=[], parent=None, parent_cmdb=None):
+def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
     '''
     Recursively generates the records, obtained from CIP, that will be pushed to CMDB.
 
@@ -173,5 +173,5 @@ def generate_records(entity, cip_data, records=[], parent=None, parent_cmdb=None
 
 def main():
     cip_data = json.load(sys.stdin)
-    generate_records('provider', cip_data, records)
+    generate_records('provider', cip_data)
     print(json.dumps(records, indent=4))
