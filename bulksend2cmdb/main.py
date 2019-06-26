@@ -12,6 +12,9 @@ logging.getLogger('urllib').setLevel(logging.DEBUG)
 logging.getLogger('json').setLevel(logging.DEBUG)
 
 
+records = []
+
+
 def get_entity_key(entity):
     '''
     Returns the entity key that contains the entity ID value (according to CMDB schema)
@@ -76,14 +79,14 @@ def get_from_cip(entity, cip_records, parent=None):
     return l
 
 
-def get_from_cmdb(entity, cip_id, parent=None):
+def get_from_cmdb(entity, cip_id=None, parent=None):
     '''
     Obtains, if exists, a matching CMDB record based on the entity type
     and its CIP id. If parent is given, it filters CMDB records according
     to the entity's parent value.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :cip_id: entity CIP id value
+    :cip_id: entity CIP id value to match
     :parent: parent's entity CMDB id value
     '''
     parent_key = get_parent_key(entity)
@@ -101,14 +104,14 @@ def get_from_cmdb(entity, cip_id, parent=None):
                 record['data']['id'] = record['_id']
                 filtered_data.append(record)
     # matching
-    entity_key = get_entity_key(entity)
-    for record in filtered_data:
-        if cip_id == record['data'][entity_key]:
-            return record
+    if cip_id:
+        entity_key = get_entity_key(entity)
+        for record in filtered_data:
+            if cip_id == record['data'][entity_key]:
+                return record
 
 
-
-def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
+def generate_records(entity, cip_data, records=[], parent=None, parent_cmdb=None):
     '''
     Recursively generates the records, obtained from CIP, that will be pushed to CMDB.
 
@@ -140,7 +143,7 @@ def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
     for item in cip:
         cip_id_value = item['data'][entity_key]
         cmdb_match = get_from_cmdb(entity,
-                                   cip_id_value,
+                                   cip_id=cip_id_value,
                                    parent=parent_cmdb)
         cmdb_id_value = None
         if cmdb_match:
@@ -157,15 +160,18 @@ def generate_records(entity, cip_data, parent=None, parent_cmdb=None):
         if cmdb_id_value:
             item['_id'] = cmdb_id_value
         item['data'][parent_key] = parent_cmdb
+        records.append(item)
 
         logging.debug('Resultant record: %s' % json.dumps(item, indent=4))
         for child in entity_children:
             generate_records(child,
                              cip_data,
+                             records,
                              parent=cip_id_value,
                              parent_cmdb=cmdb_id_value)
 
 
 def main():
     cip_data = json.load(sys.stdin)
-    generate_records('provider', cip_data)
+    generate_records('provider', cip_data, records)
+    print(json.dumps(records, indent=4))
