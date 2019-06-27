@@ -42,6 +42,39 @@ def cmdb_get_request(url_endpoint):
     return l
 
 
+def set_bulk_format(json_data):
+    '''
+    Set JSON data according to CouchDB format for bulk operations.
+
+    :json_data: JSON data
+    '''
+    d = {}
+    d['docs'] = json_data
+    return json.dumps(d)
+
+
+def cmdb_bulk_post(json_data):
+    '''
+    Performs BULK POST HTTP request to CMDB
+
+    :json_data: JSON data
+    ''' 
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    url = urllib.parse.urljoin(
+        opts.cmdb_write_endpoint,
+        '_bulk_docs')
+    url = opts.cmdb_write_endpoint+'/_bulk_docs'
+    logging.debug("BULK POSTING TO %s" % url)
+    bulk_json_data = set_bulk_format(json_data)
+    s = requests.Session()
+    s.auth = (opts.cmdb_db_user, opts.cmdb_db_pass)
+    r = s.post(url, headers=headers, data=bulk_json_data)
+    logging.debug('Result/s of BULK POST: %s' % r.content)
+
+
+
 def get_entity_key(entity):
     '''
     Returns the entity key that contains the entity ID value (according to CMDB schema)
@@ -273,10 +306,22 @@ def generate_deleted_records(entity, parent=None):
     
 
 def get_input_opts():
+    '''
+    Manage input arguments.
+    '''
     parser = argparse.ArgumentParser(description=('CIP->CMDBv1 data pusher.'))
     parser.add_argument('--cmdb-read-endpoint',
                         metavar='URL',
                         help='Specify CMDB read URL')
+    parser.add_argument('--cmdb-write-endpoint',
+                        metavar='URL',
+                        help='Specify CMDB write URL')
+    parser.add_argument('--cmdb-db-user',
+                        metavar='USERNAME',
+                        help='With password authentication, this specifies CMDB username')
+    parser.add_argument('--cmdb-db-pass',
+                        metavar='PASSWORD',
+                        help='With password authentication, this specifies CMDB password')
     parser.add_argument('--cmdb-data-file',
                         metavar='JSON_FILE',
                         help='Specify a JSON file for CMDB data rather than getting remotely')
@@ -292,3 +337,5 @@ def main():
     for service in services:
         generate_deleted_records('tenant', parent=service['_id'])
     logging.debug(json.dumps(records, indent=4))
+    # bulk post
+    cmdb_bulk_post(records)
