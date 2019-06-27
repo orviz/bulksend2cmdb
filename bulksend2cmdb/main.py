@@ -18,6 +18,32 @@ cip_data = json.load(sys.stdin)
 opts = None
 
 
+def cmdb_get_request(url_endpoint):
+    '''
+    Performs GET HTTP requests to CMDB
+
+    :url_endpoint: URL endpoint
+    ''' 
+    l = []
+    url = urllib.parse.urljoin(
+        opts.cmdb_read_endpoint, url_endpoint)
+    r = requests.get(url)
+    if r.status_code == requests.codes.ok:
+        r_json = r.json()
+        if not r_json.has_key('error'):
+            # 'provider' has no rows
+            if not r_json.has_key('rows'):
+                #d[r_json['_id']] = r_json
+                l.append(r_json)
+            else:
+                for item in r_json['rows']:
+                    #d[item['id']] = item['doc']
+                    l.append(item['doc'])
+        else:
+            logging.debug('Got CMDB error in HTTP request: %s' % r_json)
+    return l
+
+
 def get_entity_key(entity):
     '''
     Returns the entity key that contains the entity ID value (according to CMDB schema)
@@ -109,6 +135,28 @@ def get_from_cmdb_file(entity, parent=None):
     return filtered_data
 
 
+def get_from_cmdb_http(entity, parent):
+    '''
+    Get entity-based CMDB data via HTTP
+
+    :entity: entity type (one of provider|service|tenant|image|flavor)
+    :parent: parent's entity CMDB id value. In the specific case of the provider
+             this variable does not point to the parent, but to the provider id
+    '''
+    if entity == 'provider':
+	url_endpoint = 'provider/id/%s?include_docs=true' % parent
+    elif entity == 'service':
+        url_endpoint = 'service/filters/provider_id/%s?include_docs=true' % parent
+    elif entity == 'tenant':
+        url_endpoint = 'tenant/filters/service_id/%s?include_docs=true' % parent
+    elif entity == 'image':
+	url_endpoint = 'image/filters/tenant_id/%s?include_docs=true' % parent
+    elif entity == 'flavor':
+	url_endpoint = 'flavor/filters/tenant_id/%s?include_docs=true' % parent
+
+    return cmdb_get_request(url_endpoint)
+
+
 def get_from_cmdb(entity, cip_id=None, parent=None):
     '''
     Obtains, if exists, a matching CMDB record based on the entity type
@@ -121,6 +169,8 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
     '''
     if opts.cmdb_data_file:
         cmdb_data = get_from_cmdb_file(entity, parent)
+    elif opts.cmdb_read_endpoint:
+        cmdb_data = get_from_cmdb_http(entity, parent)
     
     # matching
     if cip_id:
@@ -222,6 +272,9 @@ def generate_deleted_records(entity, parent=None):
 
 def get_input_opts():
     parser = argparse.ArgumentParser(description=('CIP->CMDBv1 data pusher.'))
+    parser.add_argument('--cmdb-read-endpoint',
+                        metavar='URL',
+                        help='Specify CMDB read URL')
     parser.add_argument('--cmdb-data-file',
                         metavar='JSON_FILE',
                         help='Specify a JSON file for CMDB data rather than getting remotely')
