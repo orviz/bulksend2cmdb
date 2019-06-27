@@ -198,7 +198,7 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
         cmdb_data = get_from_cmdb_file(entity, parent)
     elif opts.cmdb_read_endpoint:
         cmdb_data = get_from_cmdb_http(entity, parent)
-    
+
     # matching
     if cip_id:
         entity_key = get_entity_key(entity)
