@@ -1,3 +1,4 @@
+import argparse
 import logging
 import requests
 import simplejson as json
@@ -14,6 +15,7 @@ logging.getLogger('json').setLevel(logging.DEBUG)
 
 records = []
 cip_data = json.load(sys.stdin)
+opts = None
 
 
 def get_entity_key(entity):
@@ -83,6 +85,30 @@ def get_from_cip(entity, parent=None, data=None):
     return l
 
 
+def get_from_cmdb_file(entity, parent=None):
+    '''
+    Returns entity-based CMDB data stored in a JSON file.
+    
+    :entity: entity type (one of provider|service|tenant|image|flavor)
+    :parent: parent's entity CMDB id value
+    '''
+    with open(opts.cmdb_data_file) as json_file:
+        cmdb_data = json.load(json_file)
+    # filtering
+    parent_key = get_parent_key(entity)
+    filtered_data = []
+    for record in cmdb_data:
+        if record['type'] == entity:
+            if parent:
+                if record['data'][parent_key] == parent:
+                    filtered_data.append(record)
+            else:
+                # workaround for provider case
+                record['data']['id'] = record['_id']
+                filtered_data.append(record)
+    return filtered_data
+
+
 def get_from_cmdb(entity, cip_id=None, parent=None):
     '''
     Obtains, if exists, a matching CMDB record based on the entity type
@@ -93,29 +119,17 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
     :cip_id: entity CIP id value to match
     :parent: parent's entity CMDB id value
     '''
-    parent_key = get_parent_key(entity)
-    with open('CMDB_IFCA.json') as json_file:
-        cmdb_data = json.load(json_file)
-    # filtering
-    filtered_data = []
-    for record in cmdb_data:
-        if record['type'] == entity:
-            if parent:
-                logging.debug('record[data][parent_key]: %s == parent: %s' % (record['data'][parent_key], parent))
-                if record['data'][parent_key] == parent:
-                    filtered_data.append(record)
-            else:
-                # workaround for provider case
-                record['data']['id'] = record['_id']
-                filtered_data.append(record)
+    if opts.cmdb_data_file:
+        cmdb_data = get_from_cmdb_file(entity, parent)
+    
     # matching
     if cip_id:
         entity_key = get_entity_key(entity)
-        for record in filtered_data:
+        for record in cmdb_data:
             if cip_id == record['data'][entity_key]:
                 return record
     else:
-        return filtered_data
+        return cmdb_data
 
 
 def generate_records(entity, parent=None, parent_cmdb=None):
@@ -206,7 +220,17 @@ def generate_deleted_records(entity, parent=None):
                                      parent=cmdb_item['_id'])
     
 
+def get_input_opts():
+    parser = argparse.ArgumentParser(description=('CIP->CMDBv1 data pusher.'))
+    parser.add_argument('--cmdb-data-file',
+                        metavar='JSON_FILE',
+                        help='Specify a JSON file for CMDB data rather than getting remotely')
+    return parser.parse_args()
+
+
 def main():
+    global opts
+    opts = get_input_opts()
     generate_records('provider')
     # delete __only__ starting from tenants
     services = get_from_cip('service', data=records)
