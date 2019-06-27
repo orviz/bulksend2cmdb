@@ -48,7 +48,7 @@
         "service": "eaa07cfcceb85cd11b8adacf350066fe",
         "type": "linux",
         "version": "16.04-gpu",
-        "tenant_id": "tenant_1",
+        "tenant_id": "id_1",
         "tenant_name": "my_project"
     },
     "type": "image"
