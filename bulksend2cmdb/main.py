@@ -33,11 +33,9 @@ def cmdb_get_request(url_endpoint):
         if not r_json.has_key('error'):
             # 'provider' has no rows
             if not r_json.has_key('rows'):
-                #d[r_json['_id']] = r_json
                 l.append(r_json)
             else:
                 for item in r_json['rows']:
-                    #d[item['id']] = item['doc']
                     l.append(item['doc'])
         else:
             logging.debug('Got CMDB error in HTTP request: %s' % r_json)
@@ -51,7 +49,7 @@ def get_entity_key(entity):
     :entity: entity type (one of provider|service|tenant|image|flavor)
     '''
     return {
-        'provider': 'id',
+        'provider': 'name',
         'service': 'endpoint',
         'tenant': 'tenant_id',
         'image': 'image_id',
@@ -65,7 +63,7 @@ def get_parent_key(entity):
     :entity: entity type (one of provider|service|tenant|image|flavor)
     '''
     return {
-        'provider': None,
+        'provider': 'name',
         'service': 'provider_id',
         'tenant': 'service',
         'image': 'tenant_id',
@@ -111,12 +109,13 @@ def get_from_cip(entity, parent=None, data=None):
     return l
 
 
-def get_from_cmdb_file(entity, parent=None):
+def get_from_cmdb_file(entity, parent):
     '''
     Returns entity-based CMDB data stored in a JSON file.
     
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :parent: parent's entity CMDB id value
+    :parent: parent's entity CMDB id value. In the specific case of the provider
+             this variable does not point to the parent, but to the provider id
     '''
     with open(opts.cmdb_data_file) as json_file:
         cmdb_data = json.load(json_file)
@@ -125,12 +124,7 @@ def get_from_cmdb_file(entity, parent=None):
     filtered_data = []
     for record in cmdb_data:
         if record['type'] == entity:
-            if parent:
-                if record['data'][parent_key] == parent:
-                    filtered_data.append(record)
-            else:
-                # workaround for provider case
-                record['data']['id'] = record['_id']
+            if record['data'][parent_key] == parent:
                 filtered_data.append(record)
     return filtered_data
 
@@ -211,6 +205,9 @@ def generate_records(entity, parent=None, parent_cmdb=None):
 
     for item in cip:
         cip_id_value = item['data'][entity_key]
+        # special 'provider' case
+        if entity == 'provider' and not parent_cmdb:
+            parent_cmdb = cip_id_value
         cmdb_match = get_from_cmdb(entity,
                                    cip_id=cip_id_value,
                                    parent=parent_cmdb)
@@ -224,9 +221,14 @@ def generate_records(entity, parent=None, parent_cmdb=None):
             logging.debug('Record not in CMDB [action: create]')
             # generate UUID __only__ when there are children entities
             if entity_children:
-                logging.debug(('Generating CMDB id (UUID-based) as entity '
-                               '<%s> has children entities' % entity))
-                cmdb_id_value = str(uuid.uuid4())
+                # special 'provider' case -> _id == sitename
+                if entity == 'provider':
+                    logging.debug('Generating provider CMDB id as the site name value')
+                    cmdb_id_value = parent_cmdb
+		else:
+                    logging.debug(('Generating CMDB id (UUID-based) as entity '
+                                   '<%s> has children entities' % entity))
+                    cmdb_id_value = str(uuid.uuid4())
         if cmdb_id_value:
             item['_id'] = cmdb_id_value
         item['data'][parent_key] = parent_cmdb
