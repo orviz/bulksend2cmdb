@@ -58,17 +58,21 @@ def get_children_entity(entity):
         'flavor': []}[entity]
 
 
-def get_from_cip(entity, parent=None):
+def get_from_cip(entity, parent=None, data=None):
     '''
     Retrieves the records from CIP that match the entity type. If parent is given, it 
     filters CIP records according to the entity's parent value.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     :parent: parent's entity CIP id value
+    :data: optional data (default: global 'cip_data' variable)
     '''
     l = []
     parent_key = get_parent_key(entity)
-    for record in cip_records:
+    _cip_data = cip_data
+    if data:
+        _cip_data = data
+    for record in _cip_data:
         if record['type'] == entity:
             if parent:
                 record_parent = record['data'][parent_key]
@@ -97,6 +101,7 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
     for record in cmdb_data:
         if record['type'] == entity:
             if parent:
+                logging.debug('record[data][parent_key]: %s == parent: %s' % (record['data'][parent_key], parent))
                 if record['data'][parent_key] == parent:
                     filtered_data.append(record)
             else:
@@ -109,6 +114,8 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
         for record in filtered_data:
             if cip_id == record['data'][entity_key]:
                 return record
+    else:
+        return filtered_data
 
 
 def generate_records(entity, parent=None, parent_cmdb=None):
@@ -146,10 +153,11 @@ def generate_records(entity, parent=None, parent_cmdb=None):
         cmdb_id_value = None
         if cmdb_match:
             logging.debug(('Found record in CMDB matching entity <%s> and CIP '
-                           'id <%s>' % (entity, cip_id_value)))
+                'id <%s> [action: update]' % (entity, cip_id_value)))
             cmdb_id_value = cmdb_match['_id']
             item['_rev'] = cmdb_match['_rev']
         else:
+            logging.debug('Record not in CMDB [action: create]')
             # generate UUID __only__ when there are children entities
             if entity_children:
                 logging.debug(('Generating CMDB id (UUID-based) as entity '
@@ -167,6 +175,31 @@ def generate_records(entity, parent=None, parent_cmdb=None):
                              parent_cmdb=cmdb_id_value)
 
 
+def generate_deleted_records(entity, parent=None):
+    logging.debug('Recursive call (locals: %s)' % locals())
+    
+    cmdb = get_from_cmdb(entity,
+                         parent=parent)
+    logging.debug('CMDB data for entity <%s>: %s' % (entity, cmdb))
+    
+    entity_children = get_children_entity(entity)
+    entity_key = get_entity_key(entity)
+    records_entity_data = [item['data'][entity_key] for item in get_from_cip(entity, parent=parent, data=records)]
+
+    for cmdb_item in cmdb:
+        if cmdb_item['data'][entity_key] not in records_entity_data:
+            logging.debug('Record from CMDB not found in CIP data (parent: %s): %s [action: delete]' % (parent, cmdb_item))
+            cmdb_item['_deleted'] = True
+            records.append(cmdb_item)
+        for child in entity_children:
+            generate_deleted_records(child,
+                                     parent=cmdb_item['_id'])
+    
+
 def main():
     generate_records('provider')
-    print(json.dumps(records, indent=4))
+    # delete __only__ starting from tenants
+    services = get_from_cip('service', data=records)
+    for service in services:
+        generate_deleted_records('tenant', parent=service['_id'])
+    logging.debug(json.dumps(records, indent=4))
