@@ -23,7 +23,7 @@ def cmdb_get_request(url_endpoint):
     Performs GET HTTP requests to CMDB
 
     :url_endpoint: URL endpoint
-    ''' 
+    '''
     l = []
     url = urllib.parse.urljoin(
         opts.cmdb_read_endpoint, url_endpoint)
@@ -58,7 +58,7 @@ def cmdb_bulk_post(json_data):
     Performs BULK POST HTTP request to CMDB
 
     :json_data: JSON data
-    ''' 
+    '''
     headers = {
         'Content-Type': 'application/json',
     }
@@ -119,7 +119,7 @@ def get_children_entity(entity):
 
 def get_from_cip(entity, parent=None, data=None):
     '''
-    Retrieves the records from CIP that match the entity type. If parent is given, it 
+    Retrieves the records from CIP that match the entity type. If parent is given, it
     filters CIP records according to the entity's parent value.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
@@ -145,7 +145,7 @@ def get_from_cip(entity, parent=None, data=None):
 def get_from_cmdb_file(entity, parent):
     '''
     Returns entity-based CMDB data stored in a JSON file.
-    
+
     :entity: entity type (one of provider|service|tenant|image|flavor)
     :parent: parent's entity CMDB id value. In the specific case of the provider
              this variable does not point to the parent, but to the provider id
@@ -286,11 +286,11 @@ def generate_deleted_records(entity, parent=None):
     :parent: parent's entity id value (same for both global records and CMBD)
     '''
     logging.debug('Recursive call (locals: %s)' % locals())
-    
+
     cmdb = get_from_cmdb(entity,
                          parent=parent)
     logging.debug('CMDB data for entity <%s>: %s' % (entity, cmdb))
-    
+
     entity_children = get_children_entity(entity)
     entity_key = get_entity_key(entity)
     records_entity_data = [item['data'][entity_key] for item in get_from_cip(entity, parent=parent, data=records)]
@@ -303,7 +303,7 @@ def generate_deleted_records(entity, parent=None):
         for child in entity_children:
             generate_deleted_records(child,
                                      parent=cmdb_item['_id'])
-    
+
 
 def get_input_opts():
     '''
@@ -325,6 +325,9 @@ def get_input_opts():
     parser.add_argument('--cmdb-data-file',
                         metavar='JSON_FILE',
                         help='Specify a JSON file for CMDB data rather than getting remotely')
+    parser.add_argument('--dry-run',
+                        action='store_true',
+                        help='Do not post to remote CMDB service')
     return parser.parse_args()
 
 
@@ -338,4 +341,5 @@ def main():
         generate_deleted_records('tenant', parent=service['_id'])
     logging.debug(json.dumps(records, indent=4))
     # bulk post
-    cmdb_bulk_post(records)
+    if not opts.dry_run:
+        cmdb_bulk_post(records)
