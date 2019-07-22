@@ -68,11 +68,17 @@ def cmdb_bulk_post(json_data):
     url = opts.cmdb_write_endpoint+'/_bulk_docs'
     logging.debug("BULK POSTING TO %s" % url)
     bulk_json_data = set_bulk_format(json_data)
-    s = requests.Session()
-    s.auth = (opts.cmdb_db_user, opts.cmdb_db_pass)
-    r = s.post(url, headers=headers, data=bulk_json_data)
+    if opts.oidc_token:
+        headers['Authorization'] = 'Bearer %s' % opts.oidc_token
+        r = requests.post(url, headers=headers, data=bulk_json_data)
+    elif (opts.cmdb_db_user and opts.cmdb_db_pass):
+        s = requests.Session()
+        s.auth = (opts.cmdb_db_user, opts.cmdb_db_pass)
+        r = s.post(url, headers=headers, data=bulk_json_data)
+    else:
+        logging.error(('No authorization credentials (OpenID token OR '
+                       'user/password) were provided'))
     logging.debug('Result/s of BULK POST: %s' % r.content)
-
 
 
 def get_entity_key(entity):
@@ -365,6 +371,9 @@ def get_input_opts():
     parser.add_argument('--cmdb-write-endpoint',
                         metavar='URL',
                         help='Specify CMDB write URL')
+    parser.add_argument('--oidc-token',
+                        metavar='TOKEN',
+                        help='OpenID (bearer) token value for authentication')
     parser.add_argument('--cmdb-db-user',
                         metavar='USERNAME',
                         help=('With password authentication, this specifies '
@@ -372,7 +381,7 @@ def get_input_opts():
     parser.add_argument('--cmdb-db-pass',
                         metavar='PASSWORD',
                         help=('With password authentication, this specifies '
-                              'CMDB password')
+                              'CMDB password'))
     parser.add_argument('--cmdb-data-file',
                         metavar='JSON_FILE',
                         help=('Specify a JSON file for CMDB data rather than '
