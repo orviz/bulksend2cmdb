@@ -77,7 +77,8 @@ def cmdb_bulk_post(json_data):
 
 def get_entity_key(entity):
     '''
-    Returns the entity key that contains the entity ID value (according to CMDB schema)
+    Returns the entity key that contains the entity ID value (according to
+    CMDB schema).
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     '''
@@ -91,7 +92,8 @@ def get_entity_key(entity):
 
 def get_parent_key(entity):
     '''
-    Returns the parent's entity key that contains the entity ID value (according to CMDB schema)
+    Returns the parent's entity key that contains the entity ID value
+    (according to CMDB schema).
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     '''
@@ -119,8 +121,8 @@ def get_children_entity(entity):
 
 def get_from_cip(entity, parent=None, data=None):
     '''
-    Retrieves the records from CIP that match the entity type. If parent is given, it
-    filters CIP records according to the entity's parent value.
+    Retrieves the records from CIP that match the entity type. If parent is
+    given, it filters CIP records according to the entity's parent value.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     :parent: parent's entity CIP id value
@@ -147,8 +149,9 @@ def get_from_cmdb_file(entity, parent):
     Returns entity-based CMDB data stored in a JSON file.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :parent: parent's entity CMDB id value. In the specific case of the provider
-             this variable does not point to the parent, but to the provider id
+    :parent: parent's entity CMDB id value. In the specific case of the
+             provider this variable does not point to the parent, but to the
+             provider id.
     '''
     with open(opts.cmdb_data_file) as json_file:
         cmdb_data = json.load(json_file)
@@ -167,15 +170,18 @@ def get_from_cmdb_http(entity, parent):
     Get entity-based CMDB data via HTTP
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
-    :parent: parent's entity CMDB id value. In the specific case of the provider
-             this variable does not point to the parent, but to the provider id
+    :parent: parent's entity CMDB id value. In the specific case of the
+             provider this variable does not point to the parent, but to the
+             provider id.
     '''
     if entity == 'provider':
 	url_endpoint = 'provider/id/%s?include_docs=true' % parent
     elif entity == 'service':
-        url_endpoint = 'service/filters/provider_id/%s?include_docs=true' % parent
+        url_endpoint = ('service/filters/provider_id/%s'
+                        '?include_docs=true' % parent)
     elif entity == 'tenant':
-        url_endpoint = 'tenant/filters/service_id/%s?include_docs=true' % parent
+        url_endpoint = ('tenant/filters/service_id/%s'
+                        '?include_docs=true' % parent)
     elif entity == 'image':
 	url_endpoint = 'image/filters/tenant_id/%s?include_docs=true' % parent
     elif entity == 'flavor':
@@ -213,13 +219,14 @@ def get_from_cmdb(entity, cip_id=None, parent=None):
 
 def generate_records(entity, parent=None, parent_cmdb=None):
     '''
-    Recursively generates the records, obtained from CIP, that will be pushed to CMDB.
+    Recursively generates the records, obtained from CIP, that will be pushed
+    to CMDB.
 
     The function follows a top-down approach, starting with the first entity
     in the hierarchy (i.e. provider), iterating downwards until the last entity
-    has been processed. At each entity level, the function iterates over the entire
-    set of input (CIP) records, trying to match them with current CMDB data. If no match
-    is found, it will add a new entry in CMDB.
+    has been processed. At each entity level, the function iterates over the
+    entire set of input (CIP) records, trying to match them with current CMDB
+    data. If no match is found, it will add a new entry in CMDB.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     :parent: parent's entity CIP id value
@@ -258,7 +265,8 @@ def generate_records(entity, parent=None, parent_cmdb=None):
             if entity_children:
                 # special 'provider' case -> _id == sitename
                 if entity == 'provider':
-                    logging.debug('Generating provider CMDB id as the site name value')
+                    logging.debug(('Generating provider CMDB id as the site '
+                                   'name value'))
                     cmdb_id_value = parent_cmdb
 		else:
                     logging.debug(('Generating CMDB id (UUID-based) as entity '
@@ -278,11 +286,12 @@ def generate_records(entity, parent=None, parent_cmdb=None):
 
 def generate_deleted_records(entity, parent=None):
     '''
-    Iterate over CMDB records, which are related (parent-child relations) to the already
-    generated ones (global records), to find the ones that are not present in the latter.
+    Iterate over CMDB records, which are related (parent-child relations) to
+    the already generated ones (global records), to find the ones that are not
+    present in the latter.
 
-    Note that broken CMDB records (e.g. no existing parent) are not detected, and thus they
-    won't be removed.
+    Note that broken CMDB records (e.g. no existing parent) are not detected,
+    and thus they won't be removed.
 
     :entity: entity type (one of provider|service|tenant|image|flavor)
     :parent: parent's entity id value (same for both global records and CMBD)
@@ -295,11 +304,15 @@ def generate_deleted_records(entity, parent=None):
 
     entity_children = get_children_entity(entity)
     entity_key = get_entity_key(entity)
-    records_entity_data = [item['data'][entity_key] for item in get_from_cip(entity, parent=parent, data=records)]
+    records_entity_data = [item['data'][entity_key] for item in get_from_cip(
+        entity, parent=parent, data=records)]
 
     for cmdb_item in cmdb:
         if cmdb_item['data'][entity_key] not in records_entity_data:
-            logging.debug('Record from CMDB not found in CIP data (parent: %s): %s [action: delete]' % (parent, cmdb_item))
+            logging.debug(('Record from CMDB not found in CIP data '
+                           '(parent: %s): %s [action: delete]' % (
+                               parent,
+                               cmdb_item)))
             cmdb_item['_deleted'] = True
             records.append(cmdb_item)
         for child in entity_children:
@@ -354,13 +367,16 @@ def get_input_opts():
                         help='Specify CMDB write URL')
     parser.add_argument('--cmdb-db-user',
                         metavar='USERNAME',
-                        help='With password authentication, this specifies CMDB username')
+                        help=('With password authentication, this specifies '
+                              'CMDB username'))
     parser.add_argument('--cmdb-db-pass',
                         metavar='PASSWORD',
-                        help='With password authentication, this specifies CMDB password')
+                        help=('With password authentication, this specifies '
+                              'CMDB password')
     parser.add_argument('--cmdb-data-file',
                         metavar='JSON_FILE',
-                        help='Specify a JSON file for CMDB data rather than getting remotely')
+                        help=('Specify a JSON file for CMDB data rather than '
+                              'getting remotely'))
     parser.add_argument('--dry-run',
                         action='store_true',
                         help='Do not post to remote CMDB service')
