@@ -307,6 +307,40 @@ def generate_deleted_records(entity, parent=None):
                                      parent=cmdb_item['_id'])
 
 
+class ServiceUtils(object):
+    @staticmethod
+    def get_id_from_cmdb(endpoint, provider_id):
+        '''
+        Gets CMDB id of the matching service endpoint
+        '''
+        r = get_from_cmdb('service', parent=provider_id)
+        for record in r:
+            if endpoint == record['data']['endpoint']:
+                return record['_id']
+
+
+def generate_additional_customization():
+    '''
+    Iterate over the generate list of records to add modifications.
+    '''
+    for record in records:
+        #print("RECORD: %s" % record)
+        if record['type'] == 'service':
+            # Manage 'service_parent_id' for children services
+            if 'service_parent_id' in record['data'].keys():
+                logging.debug(('Found service_parent_id for record '
+                               '<%s>' % record))
+                service_parent_id = ServiceUtils.get_id_from_cmdb(
+                    record['data']['service_parent_id'],
+                    record['data']['provider_id'])
+                if service_parent_id:
+                    logging.info(('Customizing service_parent_id <%s> with '
+                                  'CMDB service ID: %s' % (
+                                      record,
+                                      service_parent_id)))
+                    record['data']['service_parent_id'] = service_parent_id
+
+
 def get_input_opts():
     '''
     Manage input arguments.
@@ -336,12 +370,17 @@ def get_input_opts():
 def main():
     global opts
     opts = get_input_opts()
+
+    # generate all records
     generate_records('provider')
     # delete __only__ starting from tenants
     services = get_from_cip('service', data=records)
     for service in services:
         generate_deleted_records('tenant', parent=service['_id'])
+    # additional customization
+    generate_additional_customization()
     logging.debug(json.dumps(records, indent=4))
+
     # bulk post
     if not opts.dry_run:
         cmdb_bulk_post(records)
