@@ -175,7 +175,7 @@ def get_from_cmdb_http(entity, parent):
     elif entity == 'service':
         url_endpoint = 'service/filters/provider_id/%s?include_docs=true' % parent
     elif entity == 'tenant':
-        url_endpoint = 'tenant/filters/service_id/%s?include_docs=true' % parent
+        url_endpoint = 'tenant/filters/service/%s?include_docs=true' % parent
     elif entity == 'image':
 	url_endpoint = 'image/filters/tenant_id/%s?include_docs=true' % parent
     elif entity == 'flavor':
@@ -260,7 +260,7 @@ def generate_records(entity, parent=None, parent_cmdb=None):
                 if entity == 'provider':
                     logging.debug('Generating provider CMDB id as the site name value')
                     cmdb_id_value = parent_cmdb
-		else:
+                else:
                     logging.debug(('Generating CMDB id (UUID-based) as entity '
                                    '<%s> has children entities' % entity))
                     cmdb_id_value = str(uuid.uuid4())
