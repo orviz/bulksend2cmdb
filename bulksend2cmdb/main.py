@@ -264,6 +264,11 @@ def generate_records(entity, parent=None, parent_cmdb=None):
                     logging.debug(('Generating CMDB id (UUID-based) as entity '
                                    '<%s> has children entities' % entity))
                     cmdb_id_value = str(uuid.uuid4())
+                    # NOTE: Infrastructure Manager (IM) requirement
+                    # |--> service IDs MUST start with [a-z][A-Z]
+                    if entity == 'service':
+                        logging.debug("CMDB service ID prefixed by CIP's service (data>sitename) value")
+                        cmdb_id_value = '_'.join([item['data']['sitename'], cmdb_id_value])
         if cmdb_id_value:
             item['_id'] = cmdb_id_value
         item['data'][parent_key] = parent_cmdb
